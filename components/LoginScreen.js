@@ -1,5 +1,8 @@
 import React, { Component } from 'react'
 import { Animated, View, Keyboard, KeyboardAvoidingView, TouchableWithoutFeedback, Text, TextInput, Button, StyleSheet, Image } from 'react-native'
+import config from '../config'
+import { CheckBox } from 'react-native-elements'
+import store from 'react-native-simple-store';
 
 const noKeyboard = {
   logoHeight: 200,
@@ -26,8 +29,9 @@ export class LoginScreen extends Component {
       username: '',
       password: '',
       logoHeight: new Animated.Value(noKeyboard.logoHeight),
-      topGap: new Animated.Value(noKeyboard.topGap)
-    }
+      topGap: new Animated.Value(noKeyboard.topGap),
+      rememberUser: true
+    }   
   }
 
   componentWillMount () {
@@ -56,29 +60,41 @@ export class LoginScreen extends Component {
     }
   }
 
+  async login(username, password, rememberUser) {
+    return fetch(config.IoAService + '/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        username,
+        password
+      })
+    }).then((response) => {
+      let status = response.status;
+      let jwt = response.headers.map.authorization;
+  
+      if(status > 199 && status < 300 && jwt) {
+        store.save('jwt', jwt);
+        store.save('rememberUser', rememberUser);
+      }
+      return response
+    })
+  }
+
   async submit() {
-    const { navigate } = this.props.navigation;
-    let username = this.state.username;
-    let password = this.state.password;
-    if(username) {
-      fetch('https://292e0ff7.ngrok.io/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-          username: username,
-          password: password
-        })
-      }).then((response) => {
-        if(response.status === 204) {
-          navigate('IOAScreenRoute')
+    let { navigate } = this.props.navigation;
+    let {username, password, rememberUser} = this.state;
+    if(username && password) {
+      this.login(username, password, rememberUser).then((response) => {
+        switch(response.status) {
+          case 204: 
+            navigate('IOAFormRoute');
+            break
+          default: 
+            return
         }
-        return response.json();
-      }).then((response) => {
-        // TODO handle
-        console.log(response);
       }).catch((error) => {
         //TODO handle
         console.error(error);
@@ -124,12 +140,19 @@ export class LoginScreen extends Component {
                            value={this.state.password}
                            secureTextEntry/>
               </View>
+              <View style={styles.remember}>
+                <CheckBox
+                  title='Keep me logged in'
+                  checked={this.state.rememberUser}
+                  onPress={() => this.setState({rememberUser: !this.state.rememberUser})}
+                />
+              </View>
               <View style={{height: 10}} />
               <View style={styles.submitWrapper}>
                 <Button title='Login'
                         color='white'
                         style={styles.submit}
-                        onPress={this.submit.bind(this)}/>
+                        onPress={() => this.submit()}/>
               </View>
               <View style={{ height: 60 }}/>
             </View>
@@ -142,17 +165,8 @@ export class LoginScreen extends Component {
 
 const styles = StyleSheet.create({
   container: {
-    // alignSelf: 'stretch',
     flex: 1,
-    // position: 'absolute',
-    // top: 0,
-    // left: 0,
-    // bottom: 0,
-    // right: 0,
     backgroundColor: '#fff',
-    // alignItems: 'center',
-    // justifyContent: 'center',
-    // flexDirection: 'column',
   },
   header: {
     flex: 3,
@@ -172,7 +186,6 @@ const styles = StyleSheet.create({
     flexDirection: 'column'
   },
   formInput: {
-    // flex: 1
     margin: 5
   },
   logoWrapper: {

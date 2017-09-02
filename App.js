@@ -2,21 +2,21 @@ import React, { Component } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { StackNavigator } from 'react-navigation'
 import { LoginScreen } from './components/LoginScreen'
-import { IOAScreen } from './components/IOAScreen'
+import { IOAForm } from './components/IOAForm'
+
+
 
 const Nav = StackNavigator({
   LoginRoute: {
     screen: LoginScreen,
     navigationOptions: {
-      header: null
+      header: null,
+      headerBackTitle: 'Logout',
     }
   },
-  IOAScreenRoute: {
-    screen: IOAScreen,
-    navigationOptions: {
-      // header: null,
-      // headerLeft: null
-    }
+  IOAFormRoute: {
+    screen: IOAForm,
+    navigationOptions: {}
   }
 })
 
@@ -27,12 +27,3 @@ export default class App extends React.Component {
     );
   }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    // flex: 1,
-    // backgroundColor: '#fff',
-    // alignItems: 'center',
-    // justifyContent: 'center',
-  }
-});
